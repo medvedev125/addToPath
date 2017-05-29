@@ -10,9 +10,10 @@
 @echo Run...
 @echo additational_path = %additational_path%
 
-@rem check langth of path variable
-@rem ... todo
+@rem todo: check langth of path variable
 
 @rem remove the additational_path from the PATH and add it to beginning
 @call set NEW_PATH=%additational_path%;%%PATH:%additational_path%;=%%
+@rem todo: handle the case when the "additational_path" is in end of PATH (so there is not the ";" sign)
+
 call setx PATH "%NEW_PATH%"
