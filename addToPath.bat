@@ -7,6 +7,8 @@
 @rem input arguments
 @set additational_path=%*
 
+@rem todo: support multiply pathes as arguments: addToPath.bat ["additational_path1"] ["additational_path2"] ...
+
 @echo Run...
 @echo additational_path = %additational_path%
 
