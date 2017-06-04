@@ -13,6 +13,7 @@
 @echo additational_path = %additational_path%
 
 @rem todo: check langth of path variable
+@rem todo: check is the PATH empty
 
 @rem remove the additational_path from the PATH and add it to beginning
 @call set NEW_PATH=%additational_path%;%%PATH:%additational_path%;=%%
