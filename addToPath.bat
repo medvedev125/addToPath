@@ -4,19 +4,73 @@
 @echo usage example:
 @echo 	addToPath.bat c:\Program Files (x86)\Java\jdk1.7.0_45\bin
 
-@rem input arguments
-@set additational_path=%*
+@call :main %*
+@exit /b %errorcode%
 
-@rem todo: support multiply pathes as arguments: addToPath.bat ["additational_path1"] ["additational_path2"] ...
+:addToPathLikeVar
+	@rem remove the additational_path from the PATH and add it to beginning
+	set addToPathLikeVar_path_var=%~1
+	set addToPathLikeVar_additational_path=%~2
+	set addToPathLikeVar_result=
 
-@echo Run...
-@echo additational_path = %additational_path%
+	@rem todo: support multiply pathes as arguments: addToPath.bat ["additational_path1"] ["additational_path2"] ...
+	@rem todo: check langth of path variable
+	
 
-@rem todo: check langth of path variable
-@rem todo: check is the PATH empty
+	@if "%addToPathLikeVar_path_var%"=="" (
+		@set addToPathLikeVar_result=%addToPathLikeVar_additational_path%
+		@exit /b %errorcode%
+	)
 
-@rem remove the additational_path from the PATH and add it to beginning
-@call set NEW_PATH=%additational_path%;%%PATH:%additational_path%;=%%
-@rem todo: handle the case when the "additational_path" is in end of PATH (so there is not the ";" sign)
+	@if "%addToPathLikeVar_additational_path%"=="" (
+		@set addToPathLikeVar_result=%addToPathLikeVar_path_var%
+		@exit /b %errorcode%
+	)
+	
+	@rem handle the case when "\" is in the end of addToPathLikeVar_additational_path or items in addToPathLikeVar_path_var
+	set addToPathLikeVar_additational_path=%addToPathLikeVar_additational_path:/=\%
+	set backslash_in_end=%addToPathLikeVar_additational_path:~-1%
+	@if "%backslash_in_end%"=="\" @set addToPathLikeVar_additational_path=%addToPathLikeVar_additational_path:~0,-1%
 
-call setx PATH "%NEW_PATH%"
+	@rem handle the case when "\" is in the end of an exits item in addToPathLikeVar_path_var
+	call set addToPathLikeVar_result=%%addToPathLikeVar_path_var:%addToPathLikeVar_additational_path%\=%%
+	call set addToPathLikeVar_result=%%addToPathLikeVar_result:%addToPathLikeVar_additational_path%=%%
+	set addToPathLikeVar_result=%addToPathLikeVar_result:;;=%
+	if "%addToPathLikeVar_result%"=="" (
+		set addToPathLikeVar_result=%addToPathLikeVar_additational_path%
+	) else (
+		set addToPathLikeVar_result=%addToPathLikeVar_additational_path%;%addToPathLikeVar_result%
+	)
+	@exit /b %errorcode%
+
+:main
+	@rem input arguments
+	@set additational_path=%*
+
+	@rem todo: support multiply pathes as arguments: addToPath.bat ["additational_path1"] ["additational_path2"] ...
+
+	@rem @echo [DEBUG] Run...
+	@rem @echo [DEBUG] additational_path=%additational_path%
+	
+	@set user_path=
+	@for /F "tokens=1,3 skip=2" %%G IN ('reg query HKCU\Environment') DO @(
+		@if "%%G"=="Path" (
+			@set user_path=%%H
+		)
+	)
+	
+	@echo [DEBUG] user_path=%user_path%
+
+	@call :addToPathLikeVar "%user_path%" "%additational_path%"
+
+	@echo [DEBUG] addToPathLikeVar_result=%addToPathLikeVar_result%
+		
+	@if "%user_path%"=="%addToPathLikeVar_result%" (
+		@echo Path is already updated
+		@exit /b %errorcode%
+	)
+	
+	@rem @setx PATH "%addToPathLikeVar_result%"
+	@echo Path has been updated
+
+	@exit /b %errorcode%
