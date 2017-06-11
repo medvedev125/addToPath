@@ -17,30 +17,35 @@
 	@rem todo: check langth of path variable
 	
 
-	@if "%addToPathLikeVar_path_var%"=="" (
-		@set addToPathLikeVar_result=%addToPathLikeVar_additational_path%
-		@exit /b %errorcode%
-	)
-
 	@if "%addToPathLikeVar_additational_path%"=="" (
 		@set addToPathLikeVar_result=%addToPathLikeVar_path_var%
 		@exit /b %errorcode%
 	)
-	
 	@rem handle the case when "\" is in the end of addToPathLikeVar_additational_path or items in addToPathLikeVar_path_var
 	@set addToPathLikeVar_additational_path=%addToPathLikeVar_additational_path:/=\%
 	@set backslash_in_end=%addToPathLikeVar_additational_path:~-1%
 	@if "%backslash_in_end%"=="\" @set addToPathLikeVar_additational_path=%addToPathLikeVar_additational_path:~0,-1%
 
+	@if "%addToPathLikeVar_path_var%"=="" (
+		@set addToPathLikeVar_result=%addToPathLikeVar_additational_path%
+		@exit /b %errorcode%
+	)
+
 	@rem handle the case when "\" is in the end of an exits item in addToPathLikeVar_path_var
 	@call set addToPathLikeVar_result=%%addToPathLikeVar_path_var:%addToPathLikeVar_additational_path%\=%%
-	@call set addToPathLikeVar_result=%%addToPathLikeVar_result:%addToPathLikeVar_additational_path%=%%
-	@set addToPathLikeVar_result=%addToPathLikeVar_result:;;=%
-	@if "%addToPathLikeVar_result%"=="" (
-		@set addToPathLikeVar_result=%addToPathLikeVar_additational_path%
-	) else (
-		@set addToPathLikeVar_result=%addToPathLikeVar_additational_path%;%addToPathLikeVar_result%
+	@if not "%addToPathLikeVar_result%"=="" (
+		@call set addToPathLikeVar_result=%%addToPathLikeVar_result:%addToPathLikeVar_additational_path%=%%
 	)
+	@if not "%addToPathLikeVar_result%"=="" (
+		@set addToPathLikeVar_result=%addToPathLikeVar_result:;;=;%
+	)
+
+	@if not "%addToPathLikeVar_result%"=="" (
+		@set addToPathLikeVar_result=%addToPathLikeVar_additational_path%;%addToPathLikeVar_result%
+	) else (
+		@set addToPathLikeVar_result=%addToPathLikeVar_additational_path%
+	)
+
 	@exit /b %errorcode%
 
 :main
@@ -70,7 +75,7 @@
 		@exit /b %errorcode%
 	)
 	
-	@setx PATH "%addToPathLikeVar_result%"
+	@setx Path "%addToPathLikeVar_result%"
 	@echo Path has been updated
 
 	@exit /b %errorcode%
