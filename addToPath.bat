@@ -1,4 +1,4 @@
-@echo Batch to simply add HOME directory of specific tool to user environment variables.
+@echo Batch to simply add directory to path PATH variable of the user environment.
 @echo usage:
 @echo 	addToPath.bat [additationalPath]
 @echo usage example:
