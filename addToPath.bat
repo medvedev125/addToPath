@@ -1,81 +1,103 @@
-@echo Simple batch to simply add HOME directory of specific tool to user environment variables.
+@echo Batch to simply add HOME directory of specific tool to user environment variables.
 @echo usage:
-@echo 	addToPath.bat [additational_path]
+@echo 	addToPath.bat [additationalPath]
 @echo usage example:
 @echo 	addToPath.bat c:\Program Files (x86)\Java\jdk1.7.0_45\bin
+
+@rem todo: support multiply pathes as arguments: addToPath.bat ["additationalPath1"] ["additationalPath2"] ...
+@rem todo: check langth of path variable
 
 @call :main %*
 @exit /b %errorcode%
 
-:addToPathLikeVar
-	@rem remove the additational_path from the PATH and add it to beginning
-	@set addToPathLikeVar_path_var=%~1
-	@set addToPathLikeVar_additational_path=%~2
-	@set addToPathLikeVar_result=
+:canonizePath
+	@set canonizePath_path=%~1
+	@set canonizePath_result=
 
-	@rem todo: support multiply pathes as arguments: addToPath.bat ["additational_path1"] ["additational_path2"] ...
-	@rem todo: check langth of path variable
+	@rem handle the case when "\" is in the end of addToPathes_additationalPath or items in addToPathes_pathes
+	@set canonizePath_result=%canonizePath_path:/=\%
+	@set canonizePath_backslashInEnd=%canonizePath_result:~-1%
+	@if "%canonizePath_backslashInEnd%"=="\" @set canonizePath_result=%canonizePath_result:~0,-1%
 	
+	@exit /b %errorcode%
 
-	@if "%addToPathLikeVar_additational_path%"=="" (
-		@set addToPathLikeVar_result=%addToPathLikeVar_path_var%
-		@exit /b %errorcode%
-	)
-	@rem handle the case when "\" is in the end of addToPathLikeVar_additational_path or items in addToPathLikeVar_path_var
-	@set addToPathLikeVar_additational_path=%addToPathLikeVar_additational_path:/=\%
-	@set backslash_in_end=%addToPathLikeVar_additational_path:~-1%
-	@if "%backslash_in_end%"=="\" @set addToPathLikeVar_additational_path=%addToPathLikeVar_additational_path:~0,-1%
-
-	@if "%addToPathLikeVar_path_var%"=="" (
-		@set addToPathLikeVar_result=%addToPathLikeVar_additational_path%
+:removeFromPathes
+	@set removeFromPathes_pathes=%~1
+	@set removeFromPathes_removingPath=%~2
+	
+	@rem handle the case when "\" is in the end of an exits item in addToPathes_pathes
+	@call set removeFromPathes_result=%%removeFromPathes_pathes:%removeFromPathes_removingPath%\;=%%
+	@if "%removeFromPathes_result%"=="" (
 		@exit /b %errorcode%
 	)
 
-	@rem handle the case when "\" is in the end of an exits item in addToPathLikeVar_path_var
-	@call set addToPathLikeVar_result=%%addToPathLikeVar_path_var:%addToPathLikeVar_additational_path%\=%%
-	@if not "%addToPathLikeVar_result%"=="" (
-		@call set addToPathLikeVar_result=%%addToPathLikeVar_result:%addToPathLikeVar_additational_path%=%%
-	)
-	@if not "%addToPathLikeVar_result%"=="" (
-		@set addToPathLikeVar_result=%addToPathLikeVar_result:;;=;%
+	@call set removeFromPathes_result=%%removeFromPathes_result:%removeFromPathes_removingPath%;=%%
+	@if "%removeFromPathes_result%"=="" (
+		@exit /b %errorcode%
 	)
 
-	@if not "%addToPathLikeVar_result%"=="" (
-		@set addToPathLikeVar_result=%addToPathLikeVar_additational_path%;%addToPathLikeVar_result%
-	) else (
-		@set addToPathLikeVar_result=%addToPathLikeVar_additational_path%
+	@if "%removeFromPathes_result%"=="%removeFromPathes_removingPath%\" (
+		@set removeFromPathes_result=
 	)
+
+	@if "%removeFromPathes_result%"=="%removeFromPathes_removingPath%" (
+		@set removeFromPathes_result=
+	)
+	
+	@exit /b %errorcode%
+	
+:addToPathes
+	@rem remove the additationalPath from the PATH and add it to beginning
+	@set addToPathes_pathes=%~1
+	@set addToPathes_additationalPath=%~2
+	@set addToPathes_result=
+
+	@rem prepare the addToPathes_pathes argumemt
+	@if "%addToPathes_additationalPath%"=="" (
+		@set addToPathes_result=%addToPathes_pathes%
+		@exit /b %errorcode%
+	)
+	@call :canonizePath "%addToPathes_additationalPath%"
+	@set addToPathes_additationalPath=%canonizePath_result%
+
+	@rem prepare the addToPathes_pathes argumemt
+	@if "%addToPathes_pathes%"=="" (
+		@set addToPathes_result=%addToPathes_additationalPath%
+		@exit /b %errorcode%
+	)
+
+	@rem remove addToPathes_additationalPath from addToPathes_pathes
+	@call :removeFromPathes "%addToPathes_pathes%" "%addToPathes_additationalPath%"
+	@set addToPathes_result=%removeFromPathes_result%
+	@if "%addToPathes_result%"=="" (
+		@set addToPathes_result=%addToPathes_additationalPath%
+		@exit /b %errorcode%
+	)
+
+	@rem add addToPathes_additationalPath to the begining of addToPathes_pathes
+	@set addToPathes_result=%addToPathes_additationalPath%;%addToPathes_result%
 
 	@exit /b %errorcode%
 
 :main
 	@rem input arguments
-	@set additational_path=%*
+	@set additationalPath=%*
 
-	@rem todo: support multiply pathes as arguments: addToPath.bat ["additational_path1"] ["additational_path2"] ...
-
-	@rem @echo [DEBUG] Run...
-	@rem @echo [DEBUG] additational_path=%additational_path%
-	
 	@set user_path=
 	@for /F "tokens=1,3 skip=2" %%G IN ('reg query HKCU\Environment') DO @(
 		@if "%%G"=="Path" (
 			@set user_path=%%H
 		)
 	)
-	
-	@rem @echo [DEBUG] user_path=%user_path%
 
-	@call :addToPathLikeVar "%user_path%" "%additational_path%"
+	@call :addToPathes "%user_path%" "%additationalPath%"
 
-	@rem @echo [DEBUG] addToPathLikeVar_result=%addToPathLikeVar_result%
-		
-	@if "%user_path%"=="%addToPathLikeVar_result%" (
+	@if "%user_path%"=="%addToPathes_result%" (
 		@echo Path is already updated
 		@exit /b %errorcode%
 	)
 	
-	@setx Path "%addToPathLikeVar_result%"
+	@setx Path "%addToPathes_result%"
 	@echo Path has been updated
 
 	@exit /b %errorcode%
