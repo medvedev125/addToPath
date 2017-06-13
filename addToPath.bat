@@ -1,6 +1,9 @@
-@echo Batch to simply add directory to path PATH variable of the user environment.
-@echo usage:
+﻿@echo Batch to simply add directory to PATH variable.
+@echo Usage
+@echo Add to the user settings variable:
 @echo 	addToPath.bat [additationalPath]
+@echo Add to local Path varaible only:
+@echo 	addToPath.bat /l [additationalPath]
 @echo usage example:
 @echo 	addToPath.bat c:\Program Files (x86)\Java\jdk1.7.0_45\bin
 
@@ -13,7 +16,7 @@
 :canonizePath
 	@set canonizePath_path=%~1
 	@set canonizePath_result=
-
+	
 	@rem handle the case when "\" is in the end of addToPathes_additationalPath or items in addToPathes_pathes
 	@set canonizePath_result=%canonizePath_path:/=\%
 	@set canonizePath_backslashInEnd=%canonizePath_result:~-1%
@@ -30,7 +33,7 @@
 	@if "%removeFromPathes_result%"=="" (
 		@exit /b %errorcode%
 	)
-
+	
 	@call set removeFromPathes_result=%%removeFromPathes_result:%removeFromPathes_removingPath%;=%%
 	@if "%removeFromPathes_result%"=="" (
 		@exit /b %errorcode%
@@ -57,6 +60,7 @@
 		@set addToPathes_result=%addToPathes_pathes%
 		@exit /b %errorcode%
 	)
+
 	@call :canonizePath "%addToPathes_additationalPath%"
 	@set addToPathes_additationalPath=%canonizePath_result%
 
@@ -80,13 +84,26 @@
 	@exit /b %errorcode%
 
 :main
+
 	@rem input arguments
-	@set additationalPath=%*
+	@set allArgs=%*
+	@set addToLocalPathVar=False
+	@if "%1"=="/l" (
+		@set addToLocalPathVar=True
+		@call set allArgs=%%allArgs:*%1 =%%
+		@shift
+	)
+
+	@set additationalPath=%allArgs%
 
 	@set user_path=
-	@for /F "tokens=1,3 skip=2" %%G IN ('reg query HKCU\Environment') DO @(
-		@if "%%G"=="Path" (
-			@set user_path=%%H
+	@if "%addToLocalPathVar%"=="True" (
+		@set user_path=%Path%
+	) else (
+		@for /F "tokens=1,3 skip=2" %%G IN ('reg query HKCU\Environment') DO @(
+			@if "%%G"=="Path" (
+				@set user_path=%%H
+			)
 		)
 	)
 
@@ -97,7 +114,12 @@
 		@exit /b %errorcode%
 	)
 	
-	@setx Path "%addToPathes_result%"
+	@if "%addToLocalPathVar%"=="True" (
+		@set Path=%addToPathes_result%
+	) else (
+		@setx Path "%addToPathes_result%"
+	)
 	@echo Path has been updated
 
 	@exit /b %errorcode%
+	
