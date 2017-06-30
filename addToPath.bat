@@ -1,6 +1,6 @@
 ﻿
 @echo Batch to simply add directory to PATH variable.
-@echo Usage
+@echo Usage:
 @echo Add to the user settings variable:
 @echo 	addToPath.bat [additationalPath]
 @echo Add to local Path varaible only:
@@ -11,11 +11,13 @@
 @rem todo: support multiply pathes as arguments: addToPath.bat ["additationalPath1"] ["additationalPath2"] ...
 @rem todo: check langth of path variable
 
+@rem impl note: call set Path=%%addToPathes_result%% 
+@rem            Such assignment (call set) is mandatory, since the variable Path can have parentheses and IF expression will be incorrect
+
 @call :get_echo_state
 @set addToPath_oldEchoState=%get_echo_state_result%
 @echo off
 call :main %*
-@echo %addToPath_oldEchoState%
 
 exit /b %errorcode%
 
@@ -69,9 +71,9 @@ exit /b %errorcode%
 	set addToPathes_additationalPath=%~2
 	set addToPathes_result=
 
-	rem prepare the addToPathes_pathes argumemt
+	rem prepare the addToPathes_additationalPath argumemt
 	if "%addToPathes_additationalPath%"=="" (
-		set addToPathes_result=%addToPathes_pathes%
+		call set addToPathes_result=%%addToPathes_pathes%%
 		exit /b %errorcode%
 	)
 
@@ -80,7 +82,7 @@ exit /b %errorcode%
 
 	rem prepare the addToPathes_pathes argumemt
 	if "%addToPathes_pathes%"=="" (
-		set addToPathes_result=%addToPathes_additationalPath%
+		call set addToPathes_result=%%addToPathes_additationalPath%%
 		exit /b %errorcode%
 	)
 
@@ -88,7 +90,7 @@ exit /b %errorcode%
 	call :removeFromPathes "%addToPathes_pathes%" "%addToPathes_additationalPath%"
 	set addToPathes_result=%removeFromPathes_result%
 	if "%addToPathes_result%"=="" (
-		set addToPathes_result=%addToPathes_additationalPath%
+		call set addToPathes_result=%%addToPathes_additationalPath%%
 		exit /b %errorcode%
 	)
 
@@ -110,18 +112,16 @@ exit /b %errorcode%
 
 	set additationalPath=%allArgs%
 
-	rem Such a double assignment (set with quotes and remove quotes) is mandatory, since the variable Path can have parentheses and IF expression will be incorrect
 	set user_path=
 	if "%addToLocalPathVar%"=="True" (
-		set user_path_temp="%Path%"
+		call set user_path=%%Path%%
 	) else (
 		for /F "tokens=1,3 skip=2" %%G IN ('reg query HKCU\Environment') DO (
 			if "%%G"=="Path" (
-				set user_path_temp="%%H"
+				call set user_path=%%H
 			)
 		)
 	)
-	set user_path=%user_path_temp:~1,-1%
 
 	call :addToPathes "%user_path%" "%additationalPath%"
 
@@ -129,9 +129,9 @@ exit /b %errorcode%
 		echo Path is already updated
 		exit /b %errorcode%
 	)
-	echo addToPathes_result=%addToPathes_result%
+
 	if "%addToLocalPathVar%"=="True" (
-		set Path=%addToPathes_result%
+		call set Path=%%addToPathes_result%%
 	) else (
 		setx Path "%addToPathes_result%"
 	)
